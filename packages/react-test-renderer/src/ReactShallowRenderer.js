@@ -19,7 +19,10 @@ import warning from 'shared/warning';
 import is from 'shared/objectIs';
 
 import type {Dispatcher as DispatcherType} from 'react-reconciler/src/ReactFiberHooks';
-import type {ReactContext} from 'shared/ReactTypes';
+import type {
+  ReactContext,
+  ReactEventResponderListener,
+} from 'shared/ReactTypes';
 import type {ReactElement} from 'shared/ReactElementType';
 
 type BasicStateAction<S> = (S => S) | S;
@@ -366,6 +369,31 @@ class ReactShallowRenderer {
       return fn;
     };
 
+    const useResponder = (
+      responder,
+      props,
+    ): ReactEventResponderListener<any, any> => ({
+      props: props,
+      responder,
+    });
+
+    // TODO: implement if we decide to keep the shallow renderer
+    const useTransition = (
+      config,
+    ): [(callback: () => void) => void, boolean] => {
+      this._validateCurrentlyRenderingComponent();
+      const startTransition = callback => {
+        callback();
+      };
+      return [startTransition, false];
+    };
+
+    // TODO: implement if we decide to keep the shallow renderer
+    const useDeferredValue = <T>(value: T, config): T => {
+      this._validateCurrentlyRenderingComponent();
+      return value;
+    };
+
     return {
       readContext,
       useCallback: (identity: any),
@@ -381,6 +409,9 @@ class ReactShallowRenderer {
       useReducer,
       useRef,
       useState,
+      useResponder,
+      useTransition,
+      useDeferredValue,
     };
   }
 

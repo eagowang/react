@@ -26,8 +26,11 @@ import {
 } from 'react-reconciler/inline.fabric';
 
 import {createPortal} from 'shared/ReactPortal';
-import {setBatchingImplementation} from 'events/ReactGenericBatching';
+import {setBatchingImplementation} from 'legacy-events/ReactGenericBatching';
 import ReactVersion from 'shared/ReactVersion';
+
+// Module provided by RN:
+import {UIManager} from 'react-native/Libraries/ReactPrivate/ReactNativePrivateInterface';
 
 import NativeMethodsMixin from './NativeMethodsMixin';
 import ReactNativeComponent from './ReactNativeComponent';
@@ -107,13 +110,25 @@ const ReactFabric: ReactFabricType = {
 
   findNodeHandle,
 
-  setNativeProps(handle: any, nativeProps: Object) {
-    warningWithoutStack(
-      false,
-      'Warning: setNativeProps is not currently supported in Fabric',
-    );
+  dispatchCommand(handle: any, command: string, args: Array<any>) {
+    if (handle._nativeTag == null) {
+      warningWithoutStack(
+        handle._nativeTag != null,
+        "dispatchCommand was called with a ref that isn't a " +
+          'native component. Use React.forwardRef to get access to the underlying native component',
+      );
+      return;
+    }
 
-    return;
+    if (handle._internalInstanceHandle) {
+      nativeFabricUIManager.dispatchCommand(
+        handle._internalInstanceHandle.stateNode.node,
+        command,
+        args,
+      );
+    } else {
+      UIManager.dispatchViewManagerCommand(handle._nativeTag, command, args);
+    }
   },
 
   render(element: React$Element<any>, containerTag: any, callback: ?Function) {
@@ -122,7 +137,7 @@ const ReactFabric: ReactFabricType = {
     if (!root) {
       // TODO (bvaughn): If we decide to keep the wrapper component,
       // We could create a wrapper for containerTag as well to reduce special casing.
-      root = createContainer(containerTag, LegacyRoot, false);
+      root = createContainer(containerTag, LegacyRoot, false, null);
       roots.set(containerTag, root);
     }
     updateContainer(element, root, null, callback);
