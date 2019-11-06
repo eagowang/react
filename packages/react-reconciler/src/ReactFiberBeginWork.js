@@ -56,7 +56,6 @@ import {
 } from 'shared/ReactSideEffectTags';
 import ReactSharedInternals from 'shared/ReactSharedInternals';
 import {
-  debugRenderPhaseSideEffects,
   debugRenderPhaseSideEffectsForStrictMode,
   disableLegacyContext,
   enableProfilerTimer,
@@ -319,9 +318,8 @@ function updateForwardRef(
       renderExpirationTime,
     );
     if (
-      debugRenderPhaseSideEffects ||
-      (debugRenderPhaseSideEffectsForStrictMode &&
-        workInProgress.mode & StrictMode)
+      debugRenderPhaseSideEffectsForStrictMode &&
+      workInProgress.mode & StrictMode
     ) {
       // Only double-render components with Hooks
       if (workInProgress.memoizedState !== null) {
@@ -642,9 +640,8 @@ function updateFunctionComponent(
       renderExpirationTime,
     );
     if (
-      debugRenderPhaseSideEffects ||
-      (debugRenderPhaseSideEffectsForStrictMode &&
-        workInProgress.mode & StrictMode)
+      debugRenderPhaseSideEffectsForStrictMode &&
+      workInProgress.mode & StrictMode
     ) {
       // Only double-render components with Hooks
       if (workInProgress.memoizedState !== null) {
@@ -843,9 +840,8 @@ function finishClassComponent(
       setCurrentPhase('render');
       nextChildren = instance.render();
       if (
-        debugRenderPhaseSideEffects ||
-        (debugRenderPhaseSideEffectsForStrictMode &&
-          workInProgress.mode & StrictMode)
+        debugRenderPhaseSideEffectsForStrictMode &&
+        workInProgress.mode & StrictMode
       ) {
         instance.render();
       }
@@ -1376,9 +1372,8 @@ function mountIndeterminateComponent(
       }
 
       if (
-        debugRenderPhaseSideEffects ||
-        (debugRenderPhaseSideEffectsForStrictMode &&
-          workInProgress.mode & StrictMode)
+        debugRenderPhaseSideEffectsForStrictMode &&
+        workInProgress.mode & StrictMode
       ) {
         // Only double-render components with Hooks
         if (workInProgress.memoizedState !== null) {
@@ -2893,7 +2888,12 @@ function beginWork(
         }
         case Profiler:
           if (enableProfilerTimer) {
-            workInProgress.effectTag |= Update;
+            // Profiler should only call onRender when one of its descendants actually rendered.
+            const hasChildWork =
+              workInProgress.childExpirationTime >= renderExpirationTime;
+            if (hasChildWork) {
+              workInProgress.effectTag |= Update;
+            }
           }
           break;
         case SuspenseComponent: {
