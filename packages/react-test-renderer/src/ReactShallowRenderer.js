@@ -15,7 +15,6 @@ import shallowEqual from 'shared/shallowEqual';
 import invariant from 'shared/invariant';
 import checkPropTypes from 'prop-types/checkPropTypes';
 import ReactSharedInternals from 'shared/ReactSharedInternals';
-import warning from 'shared/warning';
 import is from 'shared/objectIs';
 
 import type {Dispatcher as DispatcherType} from 'react-reconciler/src/ReactFiberHooks';
@@ -61,29 +60,31 @@ function areHookInputsEqual(
   prevDeps: Array<mixed> | null,
 ) {
   if (prevDeps === null) {
-    warning(
-      false,
-      '%s received a final argument during this render, but not during ' +
-        'the previous render. Even though the final argument is optional, ' +
-        'its type cannot change between renders.',
-      currentHookNameInDev,
-    );
+    if (__DEV__) {
+      console.error(
+        '%s received a final argument during this render, but not during ' +
+          'the previous render. Even though the final argument is optional, ' +
+          'its type cannot change between renders.',
+        currentHookNameInDev,
+      );
+    }
     return false;
   }
 
-  // Don't bother comparing lengths in prod because these arrays should be
-  // passed inline.
-  if (nextDeps.length !== prevDeps.length) {
-    warning(
-      false,
-      'The final argument passed to %s changed size between renders. The ' +
-        'order and size of this array must remain constant.\n\n' +
-        'Previous: %s\n' +
-        'Incoming: %s',
-      currentHookNameInDev,
-      `[${nextDeps.join(', ')}]`,
-      `[${prevDeps.join(', ')}]`,
-    );
+  if (__DEV__) {
+    // Don't bother comparing lengths in prod because these arrays should be
+    // passed inline.
+    if (nextDeps.length !== prevDeps.length) {
+      console.error(
+        'The final argument passed to %s changed size between renders. The ' +
+          'order and size of this array must remain constant.\n\n' +
+          'Previous: %s\n' +
+          'Incoming: %s',
+        currentHookNameInDev,
+        `[${nextDeps.join(', ')}]`,
+        `[${prevDeps.join(', ')}]`,
+      );
+    }
   }
   for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
     if (is(nextDeps[i], prevDeps[i])) {

@@ -57,7 +57,7 @@ const getArtifactsList = async buildID => {
     ? 'process_artifacts_experimental'
     : 'process_artifacts';
   const workflowID = buildMetadata.workflows.workflow_id;
-  const workflowMetadataURL = `https://circleci.com/api/v2/workflow/${workflowID}/jobs?circle-token=${
+  const workflowMetadataURL = `https://circleci.com/api/v2/workflow/${workflowID}/job?circle-token=${
     process.env.CIRCLE_CI_API_TOKEN
   }`;
   const workflowMetadata = await http.get(workflowMetadataURL, true);
@@ -128,10 +128,17 @@ const getPublicPackages = () => {
 
     const packagePath = join(packagesRoot, dir, 'package.json');
 
-    if (dir.charAt(0) !== '.' && statSync(packagePath).isFile()) {
-      const packageJSON = JSON.parse(readFileSync(packagePath));
-
-      return packageJSON.private !== true;
+    if (dir.charAt(0) !== '.') {
+      let stat;
+      try {
+        stat = statSync(packagePath);
+      } catch (err) {
+        return false;
+      }
+      if (stat.isFile()) {
+        const packageJSON = JSON.parse(readFileSync(packagePath));
+        return packageJSON.private !== true;
+      }
     }
 
     return false;

@@ -97,7 +97,6 @@ export type ReactEventResponder<E, C> = {
   displayName: string,
   targetEventTypes: null | Array<string>,
   targetPortalPropagation: boolean,
-  rootEventTypes: null | Array<string>,
   getInitialState: null | ((props: Object) => Object),
   onEvent:
     | null
@@ -170,10 +169,10 @@ export type ReactScopeMethods = {|
   getParent(): null | ReactScopeMethods,
   getProps(): Object,
   queryAllNodes(
-    (type: string | Object, props: Object) => boolean,
+    (type: string | Object, props: Object, instance: Object) => boolean,
   ): null | Array<Object>,
   queryFirstNode(
-    (type: string | Object, props: Object) => boolean,
+    (type: string | Object, props: Object, instance: Object) => boolean,
   ): null | Object,
   containsNode(Object): boolean,
 |};

@@ -19,7 +19,6 @@ import type {
 
 import React from 'react';
 import {DiscreteEvent, UserBlockingEvent} from 'shared/ReactTypes';
-import warning from 'shared/warning';
 
 type PressProps = {|
   disabled: boolean,
@@ -206,8 +205,7 @@ function createPressEvent(
     stopPropagation() {
       // NO-OP, we should remove this in the future
       if (__DEV__) {
-        warning(
-          false,
+        console.error(
           'stopPropagation is not available on event objects created from event responder modules (React Flare). ' +
             'Try wrapping in a conditional, i.e. `if (event.type !== "press") { event.stopPropagation() }`',
         );
@@ -489,6 +487,11 @@ function updateIsPressWithinResponderRegion(
 // clicks (NVDA, Jaws, VoiceOver) do not have co-ords associated with the click
 // event and "detail" is always 0 (where normal clicks are > 0)
 function isScreenReaderVirtualClick(nativeEvent): boolean {
+  // JAWS/NVDA with Firefox.
+  if (nativeEvent.mozInputSource === 0 && nativeEvent.isTrusted) {
+    return true;
+  }
+  // Chrome
   return (
     nativeEvent.detail === 0 &&
     nativeEvent.screenX === 0 &&
@@ -621,6 +624,9 @@ const pressResponderImpl = {
           state.responderRegionOnDeactivation = null;
           state.isPressWithinResponderRegion = true;
           state.buttons = nativeEvent.buttons;
+          if (nativeEvent.button === 1) {
+            state.buttons = 4;
+          }
           dispatchPressStartEvents(event, context, props, state);
           addRootEventTypes(context, state);
         } else {
@@ -880,7 +886,7 @@ const pressResponderImpl = {
   },
 };
 
-export const PressResponder = React.unstable_createResponder(
+export const PressResponder = React.DEPRECATED_createResponder(
   'Press',
   pressResponderImpl,
 );
@@ -888,5 +894,5 @@ export const PressResponder = React.unstable_createResponder(
 export function usePress(
   props: PressProps,
 ): ReactEventResponderListener<any, any> {
-  return React.unstable_useResponder(PressResponder, props);
+  return React.DEPRECATED_useResponder(PressResponder, props);
 }
